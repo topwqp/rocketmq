@@ -69,12 +69,38 @@ public class RemotingCommand {
         }
     }
 
+    /**
+     * 请求操作码，应答方根据不同的请求码进行不同的业务处理
+     * 应答响应码。0表示成功，非0则表示各种错误
+     */
     private int code;
+    /**
+     * 请求方实现的语言
+     * 应答方实现的语言
+     */
     private LanguageCode language = LanguageCode.JAVA;
+    /**
+     * 请求方程序的版本
+     * 应答方程序的版本
+     */
     private int version = 0;
+    /**
+     * 相当于reqeustId，在同一个连接上的不同请求标识码，与响应消息中的相对应
+     * 应答不做修改直接返回
+     */
     private int opaque = requestId.getAndIncrement();
+    /**
+     * 区分是普通RPC还是onewayRPC得标志
+     * 区分是普通RPC还是onewayRPC得标志
+     */
     private int flag = 0;
+    /**
+     * 传输自定义文本信息
+     */
     private String remark;
+    /**
+     * 请求自定义扩展信息
+     */
     private HashMap<String, String> extFields;
     private transient CommandCustomHeader customHeader;
 
@@ -142,8 +168,11 @@ public class RemotingCommand {
     }
 
     public static RemotingCommand decode(final ByteBuffer byteBuffer) {
+        //获取byteBuffer的总长度
         int length = byteBuffer.limit();
+        //获取前4个字节，组装int类型，该长度为总长度
         int oriHeaderLen = byteBuffer.getInt();
+        //获取消息头的长度，这里和0xFFFFFF做与运算，编码时候的长度即为24位
         int headerLength = getHeaderLength(oriHeaderLen);
 
         byte[] headerData = new byte[headerLength];
@@ -208,12 +237,21 @@ public class RemotingCommand {
         return true;
     }
 
+    /**
+     * markProtocolType方法是将RPC类型和headerData长度编码放到一个byte[4]数组中
+     * @param source
+     * @param type
+     * @return
+     */
     public static byte[] markProtocolType(int source, SerializeType type) {
         byte[] result = new byte[4];
 
         result[0] = type.getCode();
+        //右移16位后再和255与->“16-24位”
         result[1] = (byte) ((source >> 16) & 0xFF);
+        //右移8位后再和255与->“8-16位”
         result[2] = (byte) ((source >> 8) & 0xFF);
+        //右移0位后再和255与->“8-0位”
         result[3] = (byte) (source & 0xFF);
         return result;
     }
@@ -327,33 +365,42 @@ public class RemotingCommand {
 
     public ByteBuffer encode() {
         // 1> header length size
+        //消息总长度
         int length = 4;
 
         // 2> header data length
+        //将消息头编码成byte[]
         byte[] headerData = this.headerEncode();
         length += headerData.length;
 
         // 3> body data length
         if (this.body != null) {
+            //消息体总长度
             length += body.length;
         }
 
+        //分配ByteBuffer，这边加了4，是因为消息在消息总长度的计算中没有将存储头部长度的4个字节计算在内
         ByteBuffer result = ByteBuffer.allocate(4 + length);
 
         // length
+        //将消息总长度放入ByteBuffer
         result.putInt(length);
 
         // header length
+        //将消息头长度放入ByteBuffer
         result.put(markProtocolType(headerData.length, serializeTypeCurrentRPC));
 
         // header data
+        //将消息头数据放入ByteBuffer
         result.put(headerData);
 
         // body data;
         if (this.body != null) {
+            //将消息主体放入ByteBuffer
             result.put(this.body);
         }
 
+        //重置ByteBuffer的position位置
         result.flip();
 
         return result;
