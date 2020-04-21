@@ -39,6 +39,14 @@ public class ResponseFuture {
     private volatile boolean sendRequestOK = true;
     private volatile Throwable cause;
 
+    /**
+     *
+      * @param channel
+     * @param opaque
+     * @param timeoutMillis
+     * @param invokeCallback invokeCallback是在收到消息响应的时候能够根据responseTable找到请求码对应的回调执行方法
+     * @param once  semaphore参数用作流控，当多个线程同时往一个连接写数据时可以通过信号量控制permit同时写许可的数量
+     */
     public ResponseFuture(Channel channel, int opaque, long timeoutMillis, InvokeCallback invokeCallback,
         SemaphoreReleaseOnlyOnce once) {
         this.opaque = opaque;

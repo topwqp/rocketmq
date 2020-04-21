@@ -525,6 +525,11 @@ public class CommitLog {
         return beginTimeInLock;
     }
 
+    /**
+     * 存储消息入口
+     * @param msg
+     * @return
+     */
     public PutMessageResult putMessage(final MessageExtBrokerInner msg) {
         // Set the storage time
         msg.setStoreTimestamp(System.currentTimeMillis());
