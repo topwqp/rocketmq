@@ -67,9 +67,11 @@ public class TopicPublishInfo {
     }
 
     public MessageQueue selectOneMessageQueue(final String lastBrokerName) {
+        //1 消息第一次发送，上一个失败的broker名字为null，直接round-round选择
         if (lastBrokerName == null) {
             return selectOneMessageQueue();
         } else {
+            //2 消息发送失败重试(上一个失败的broker不为null)优先选择其他Broker上的队列
             int index = this.sendWhichQueue.getAndIncrement();
             for (int i = 0; i < this.messageQueueList.size(); i++) {
                 int pos = Math.abs(index++) % this.messageQueueList.size();
@@ -80,6 +82,7 @@ public class TopicPublishInfo {
                     return mq;
                 }
             }
+            //3 没有其他的Broker可选，那么依然round-robin，可能会选择到之前失败的Broker上的队列
             return selectOneMessageQueue();
         }
     }

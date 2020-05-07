@@ -325,8 +325,10 @@ public class MQClientInstance {
     }
 
     public void updateTopicRouteInfoFromNameServer() {
+        //1、需要更新路由信息的Topic集合
         Set<String> topicList = new HashSet<String>();
 
+        //2、添加消费者需要使用到的Topic到集合中
         // Consumer
         {
             Iterator<Entry<String, MQConsumerInner>> it = this.consumerTable.entrySet().iterator();
@@ -343,7 +345,7 @@ public class MQClientInstance {
                 }
             }
         }
-
+        //3、 添加生产者需要使用到的topic到集合中
         // Producer
         {
             Iterator<Entry<String, MQProducerInner>> it = this.producerTable.entrySet().iterator();
@@ -356,7 +358,7 @@ public class MQClientInstance {
                 }
             }
         }
-
+        //从NameServer更新每个Topic的路由信息
         for (String topic : topicList) {
             this.updateTopicRouteInfoFromNameServer(topic);
         }
